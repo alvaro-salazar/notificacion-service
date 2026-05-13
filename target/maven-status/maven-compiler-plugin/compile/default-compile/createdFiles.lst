@@ -1,0 +1,4 @@
+com/denkitronik/notificacionservice/config/RabbitMQConfig.class
+com/denkitronik/notificacionservice/NotificacionServiceApplication.class
+com/denkitronik/notificacionservice/messaging/NotificacionListener.class
+com/denkitronik/notificacionservice/messaging/PedidoCreadoEvent.class
