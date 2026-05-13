@@ -1,4 +1,0 @@
-/Users/alvaro-salazar/sandbox/notificacion-service/src/main/java/com/denkitronik/notificacionservice/NotificacionServiceApplication.java
-/Users/alvaro-salazar/sandbox/notificacion-service/src/main/java/com/denkitronik/notificacionservice/config/RabbitMQConfig.java
-/Users/alvaro-salazar/sandbox/notificacion-service/src/main/java/com/denkitronik/notificacionservice/messaging/NotificacionListener.java
-/Users/alvaro-salazar/sandbox/notificacion-service/src/main/java/com/denkitronik/notificacionservice/messaging/PedidoCreadoEvent.java
