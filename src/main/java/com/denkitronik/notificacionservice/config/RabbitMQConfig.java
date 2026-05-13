@@ -3,6 +3,7 @@ package com.denkitronik.notificacionservice.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +37,10 @@ public class RabbitMQConfig {
     public Jackson2JsonMessageConverter messageConverter() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
-        return new Jackson2JsonMessageConverter(mapper);
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(mapper);
+        DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
+        typeMapper.setTrustedPackages("*");
+        converter.setJavaTypeMapper(typeMapper);
+        return converter;
     }
 }
