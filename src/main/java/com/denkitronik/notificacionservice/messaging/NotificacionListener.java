@@ -1,5 +1,8 @@
 package com.denkitronik.notificacionservice.messaging;
 
+import com.denkitronik.notificacionservice.domain.entities.EstadoMensaje;
+import com.denkitronik.notificacionservice.domain.entities.MensajeFallido;
+import com.denkitronik.notificacionservice.domain.repositories.MensajeFallidoRepository;
 import com.denkitronik.notificacionservice.events.PagoConfirmadoPayload;
 import com.denkitronik.notificacionservice.events.PagoRechazadoPayload;
 import com.denkitronik.notificacionservice.events.PedidoActualizadoPayload;
@@ -9,9 +12,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.header.Header;
 import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Component
@@ -19,11 +25,16 @@ import org.springframework.stereotype.Component;
 public class NotificacionListener {
 
     private final ObjectMapper objectMapper;
+    private final MensajeFallidoRepository mensajeFallidoRepository;
 
     /**
      * Escucha 4 topics en un solo metodo.
      * La deserializacion es manual (String -> JsonNode) para poder leer
      * el campo eventoTipo antes de saber a que clase deserializar el payload.
+     *
+     * Con isolation.level=read_committed (codelab 16.1) este consumer
+     * solo procesa mensajes cuya transaccion Kafka ya hizo commit.
+     * Mensajes de productores abortados son invisibles.
      *
      * groupId = "notificacion-group" es el consumer group de este servicio.
      * Si se levanta una segunda instancia con el mismo groupId,
@@ -77,15 +88,50 @@ public class NotificacionListener {
     /**
      * Manejador del Dead Letter Topic.
      * Se invoca automaticamente cuando un mensaje agota sus reintentos (3 intentos, 2s entre cada uno).
-     * En produccion: guardar en BD de auditoria, enviar alerta a PagerDuty/Slack, etc.
+     *
+     * En codelab 16.1 persiste el mensaje fallido en la tabla 'mensajes_fallidos'
+     * con estado PENDIENTE para que un operador pueda auditarlo o reprocesarlo.
+     * El header kafka_dlt-exception-message es inyectado automaticamente por
+     * DeadLetterPublishingRecoverer con el mensaje de la excepcion original.
      */
     @DltHandler
     public void onDlt(ConsumerRecord<String, String> record) {
+        String errorMensaje = extractHeader(record, "kafka_dlt-exception-message");
+
         log.error("[DLT] Mensaje no procesable despues de 3 reintentos");
         log.error("[DLT] topic={} key={} partition={} offset={}",
             record.topic(), record.key(), record.partition(), record.offset());
+        log.error("[DLT] Error original: {}", errorMensaje);
         log.error("[DLT] Payload: {}", record.value());
-        // TODO produccion: insertar en tabla 'mensajes_fallidos' con topic, key, payload, timestamp
-        // TODO produccion: enviar alerta a canal de alertas
+
+        // Extraer eventoId del envelope para correlacion
+        String eventoId = extractEventoId(record.value());
+
+        MensajeFallido fallido = new MensajeFallido(
+            eventoId,
+            record.topic(),
+            record.value(),
+            errorMensaje,
+            EstadoMensaje.PENDIENTE
+        );
+        mensajeFallidoRepository.save(fallido);
+
+        log.warn("[DLT] Guardado en mensajes_fallidos: id={} eventoId={} topic={}",
+            fallido.getId(), eventoId, record.topic());
+    }
+
+    private String extractHeader(ConsumerRecord<?, ?> record, String headerName) {
+        Header header = record.headers().lastHeader(headerName);
+        if (header == null) return "desconocido";
+        return new String(header.value(), StandardCharsets.UTF_8);
+    }
+
+    private String extractEventoId(String json) {
+        try {
+            JsonNode root = objectMapper.readTree(json);
+            return root.path("eventoId").asText("sin-id");
+        } catch (Exception e) {
+            return "sin-id";
+        }
     }
 }
