@@ -5,6 +5,7 @@ import com.denkitronik.notificacionservice.events.PagoConfirmadoPayload;
 import com.denkitronik.notificacionservice.events.PagoRechazadoPayload;
 import com.denkitronik.notificacionservice.events.PedidoActualizadoPayload;
 import com.denkitronik.notificacionservice.events.PedidoCreadoPayload;
+import com.denkitronik.notificacionservice.sms.SmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -18,6 +19,7 @@ import java.util.Map;
 public class NotificacionWorker {
 
     private final EmailService emailService;
+    private final SmsService smsService;
 
     /**
      * Procesa PedidoCreado: envia email de confirmacion de pedido.
@@ -46,23 +48,29 @@ public class NotificacionWorker {
     }
 
     /**
-     * Procesa PedidoActualizado: envia push notification.
-     * Push real se implementa en el codelab 17.2 (Twilio / FCM).
-     * Por ahora simula 100ms.
+     * Procesa PedidoActualizado: envia SMS al cliente con el nuevo estado del pedido.
+     * Reemplaza el Thread.sleep del codelab 17 con una llamada real a Twilio.
+     *
+     * NOTA: En produccion, el numero de telefono del cliente debe venir de
+     * cliente-service (lookup por clienteId) o incluirse en el evento.
+     * Aqui usamos un numero demo derivado del clienteId para simplificar.
      */
     @Async("notificacionExecutor")
     public void procesarPedidoActualizado(PedidoActualizadoPayload payload) {
         String hilo = Thread.currentThread().getName();
-        try {
-            log.info("[WORKER] hilo={} | Enviando push: pedido #{} cambio a {}",
-                hilo, payload.pedidoId(), payload.estadoNuevo());
-            Thread.sleep(100);
-            log.info("[WORKER] hilo={} | Push enviado: pedido #{} ahora en estado {}",
-                hilo, payload.pedidoId(), payload.estadoNuevo());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("[WORKER] hilo={} | Push interrumpido para pedido #{}", hilo, payload.pedidoId());
-        }
+        log.info("[WORKER] hilo={} | Enviando SMS de estado: pedido #{} -> {}",
+            hilo, payload.pedidoId(), payload.estadoNuevo());
+
+        // Demo: numero derivado del clienteId. En produccion: consultar cliente-service.
+        String telefono = "+15005550006"; // numero magico de pruebas de Twilio
+
+        String texto = String.format(
+            "La Fogata Digital: Tu pedido #%d ha cambiado a estado %s. " +
+            "Gracias por tu compra.",
+            payload.pedidoId(), payload.estadoNuevo()
+        );
+
+        smsService.enviarSms(telefono, texto);
     }
 
     /**
