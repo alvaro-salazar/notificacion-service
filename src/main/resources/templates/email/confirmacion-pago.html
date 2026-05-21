@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pago confirmado</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+    .header { background: #2e7d32; padding: 28px 32px; text-align: center; }
+    .header h1 { color: #ffffff; margin: 0; font-size: 22px; letter-spacing: 1px; }
+    .checkmark { font-size: 48px; text-align: center; padding: 20px 0 0; }
+    .body { padding: 32px; color: #333333; }
+    .body h2 { color: #2e7d32; font-size: 18px; margin-top: 0; }
+    .details { background: #f9f9f9; border-left: 4px solid #2e7d32; border-radius: 4px; padding: 16px 20px; margin: 20px 0; }
+    .details table { width: 100%; border-collapse: collapse; }
+    .details td { padding: 6px 0; font-size: 14px; }
+    .details td:first-child { color: #777; width: 160px; }
+    .details td:last-child { font-weight: bold; color: #222; }
+    .footer { background: #f4f4f4; padding: 16px 32px; text-align: center; font-size: 12px; color: #aaa; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>La Fogata Digital</h1>
+  </div>
+  <div class="checkmark">✅</div>
+  <div class="body">
+    <h2>Pago confirmado</h2>
+    <p>Tu pago ha sido procesado exitosamente. Aquí tienes el resumen de la transacción:</p>
+    <div class="details">
+      <table>
+        <tr>
+          <td>Número de pedido</td>
+          <td th:text="'#' + ${pedidoId}">#123</td>
+        </tr>
+        <tr>
+          <td>Monto acreditado</td>
+          <td th:text="'$' + ${monto}">$99.90</td>
+        </tr>
+        <tr>
+          <td>Método de pago</td>
+          <td th:text="${metodoPago}">Tarjeta</td>
+        </tr>
+      </table>
+    </div>
+    <p>Tu pedido está siendo preparado para despacho.</p>
+    <p>¡Gracias por tu compra en <strong>La Fogata Digital</strong>!</p>
+  </div>
+  <div class="footer">
+    Este email fue generado automáticamente. Por favor no respondas a este mensaje.
+  </div>
+</div>
+</body>
+</html>

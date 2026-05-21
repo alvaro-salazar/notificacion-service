@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Confirmación de pedido</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+    .header { background: #e25822; padding: 28px 32px; text-align: center; }
+    .header h1 { color: #ffffff; margin: 0; font-size: 22px; letter-spacing: 1px; }
+    .body { padding: 32px; color: #333333; }
+    .body h2 { color: #e25822; font-size: 18px; margin-top: 0; }
+    .details { background: #f9f9f9; border-left: 4px solid #e25822; border-radius: 4px; padding: 16px 20px; margin: 20px 0; }
+    .details table { width: 100%; border-collapse: collapse; }
+    .details td { padding: 6px 0; font-size: 14px; }
+    .details td:first-child { color: #777; width: 160px; }
+    .details td:last-child { font-weight: bold; color: #222; }
+    .total-row td { font-size: 16px; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 8px; }
+    .footer { background: #f4f4f4; padding: 16px 32px; text-align: center; font-size: 12px; color: #aaa; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>La Fogata Digital</h1>
+  </div>
+  <div class="body">
+    <h2>Pedido confirmado</h2>
+    <p>Hola, tu pedido ha sido recibido y está siendo procesado. Aquí tienes el resumen:</p>
+    <div class="details">
+      <table>
+        <tr>
+          <td>Número de pedido</td>
+          <td th:text="'#' + ${pedidoId}">#123</td>
+        </tr>
+        <tr>
+          <td>Cliente ID</td>
+          <td th:text="${clienteId}">1</td>
+        </tr>
+        <tr>
+          <td>Producto ID</td>
+          <td th:text="${productoId}">1</td>
+        </tr>
+        <tr>
+          <td>Cantidad</td>
+          <td th:text="${cantidad}">2</td>
+        </tr>
+        <tr class="total-row">
+          <td>Total</td>
+          <td th:text="'$' + ${total}">$99.90</td>
+        </tr>
+      </table>
+    </div>
+    <p>Te notificaremos cuando tu pedido sea despachado.</p>
+    <p>Gracias por confiar en <strong>La Fogata Digital</strong>.</p>
+  </div>
+  <div class="footer">
+    Este email fue generado automáticamente. Por favor no respondas a este mensaje.
+  </div>
+</div>
+</body>
+</html>

@@ -1,47 +1,54 @@
 package com.denkitronik.notificacionservice.workers;
 
+import com.denkitronik.notificacionservice.email.EmailService;
 import com.denkitronik.notificacionservice.events.PagoConfirmadoPayload;
 import com.denkitronik.notificacionservice.events.PagoRechazadoPayload;
 import com.denkitronik.notificacionservice.events.PedidoActualizadoPayload;
 import com.denkitronik.notificacionservice.events.PedidoCreadoPayload;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class NotificacionWorker {
 
+    private final EmailService emailService;
+
     /**
-     * Procesa el evento PedidoCreado en un hilo del pool notificacionExecutor.
-     * El hilo del consumer Kafka retorna inmediatamente despues de llamar este metodo.
-     *
-     * Thread.sleep simula operaciones lentas reales:
-     *   - 500ms: generacion de PDF de recibo (iText, JasperReports, etc.)
-     *   - 200ms: llamada HTTP a SendGrid/SES para enviar el email
+     * Procesa PedidoCreado: envia email de confirmacion de pedido.
+     * Reemplaza el Thread.sleep del codelab 17 con una llamada real a JavaMailSender.
      */
     @Async("notificacionExecutor")
     public void procesarPedidoCreado(PedidoCreadoPayload payload) {
         String hilo = Thread.currentThread().getName();
-        try {
-            log.info("[WORKER] hilo={} | Generando recibo PDF para pedido #{}...", hilo, payload.pedidoId());
-            Thread.sleep(500);
+        log.info("[WORKER] hilo={} | Enviando confirmacion de pedido #{} al cliente {}",
+            hilo, payload.pedidoId(), payload.clienteId());
 
-            log.info("[WORKER] hilo={} | PDF listo. Enviando email a cliente{}@fogatadigital.com", hilo, payload.clienteId());
-            Thread.sleep(200);
+        String destinatario = "cliente" + payload.clienteId() + "@fogatadigital.com";
 
-            log.info("[WORKER] hilo={} | Email enviado: pedido #{} confirmado por ${}",
-                hilo, payload.pedidoId(), payload.total());
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("[WORKER] hilo={} | Procesamiento interrumpido para pedido #{}", hilo, payload.pedidoId());
-        }
+        emailService.enviar(
+            destinatario,
+            "Confirmacion de tu pedido #" + payload.pedidoId() + " - La Fogata Digital",
+            "confirmacion-pedido",
+            Map.of(
+                "pedidoId",   payload.pedidoId(),
+                "clienteId",  payload.clienteId(),
+                "productoId", payload.productoId(),
+                "cantidad",   payload.cantidad(),
+                "total",      payload.total()
+            )
+        );
     }
 
     /**
-     * Procesa el evento PedidoActualizado: envia push notification.
-     * Simula 100ms de llamada a Firebase Cloud Messaging / APNs.
+     * Procesa PedidoActualizado: envia push notification.
+     * Push real se implementa en el codelab 17.2 (Twilio / FCM).
+     * Por ahora simula 100ms.
      */
     @Async("notificacionExecutor")
     public void procesarPedidoActualizado(PedidoActualizadoPayload payload) {
@@ -50,10 +57,8 @@ public class NotificacionWorker {
             log.info("[WORKER] hilo={} | Enviando push: pedido #{} cambio a {}",
                 hilo, payload.pedidoId(), payload.estadoNuevo());
             Thread.sleep(100);
-
             log.info("[WORKER] hilo={} | Push enviado: pedido #{} ahora en estado {}",
                 hilo, payload.pedidoId(), payload.estadoNuevo());
-
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("[WORKER] hilo={} | Push interrumpido para pedido #{}", hilo, payload.pedidoId());
@@ -61,44 +66,47 @@ public class NotificacionWorker {
     }
 
     /**
-     * Procesa el evento PagoConfirmado: envia email de confirmacion de pago.
-     * Simula 300ms de llamada HTTP al proveedor de email.
+     * Procesa PagoConfirmado: envia email de confirmacion de pago.
      */
     @Async("notificacionExecutor")
     public void procesarPagoConfirmado(PagoConfirmadoPayload payload) {
         String hilo = Thread.currentThread().getName();
-        try {
-            log.info("[WORKER] hilo={} | Enviando confirmacion de pago para pedido #{}...",
-                hilo, payload.pedidoId());
-            Thread.sleep(300);
+        log.info("[WORKER] hilo={} | Enviando confirmacion de pago para pedido #{}",
+            hilo, payload.pedidoId());
 
-            log.info("[WORKER] hilo={} | Email enviado: ${} acreditados para pedido #{}",
-                hilo, payload.monto(), payload.pedidoId());
+        String destinatario = "cliente" + payload.clienteId() + "@fogatadigital.com";
 
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("[WORKER] hilo={} | Envio interrumpido para pedido #{}", hilo, payload.pedidoId());
-        }
+        emailService.enviar(
+            destinatario,
+            "Pago confirmado para tu pedido #" + payload.pedidoId() + " - La Fogata Digital",
+            "confirmacion-pago",
+            Map.of(
+                "pedidoId",    payload.pedidoId(),
+                "monto",       payload.monto(),
+                "metodoPago",  payload.metodoPago()
+            )
+        );
     }
 
     /**
-     * Procesa el evento PagoRechazado: notifica al cliente con instrucciones de reintento.
-     * Simula 300ms de llamada HTTP al proveedor de email.
+     * Procesa PagoRechazado: notifica al cliente con instrucciones de reintento.
      */
     @Async("notificacionExecutor")
     public void procesarPagoRechazado(PagoRechazadoPayload payload) {
         String hilo = Thread.currentThread().getName();
-        try {
-            log.info("[WORKER] hilo={} | Enviando notificacion de pago rechazado para pedido #{}...",
-                hilo, payload.pedidoId());
-            Thread.sleep(300);
+        log.info("[WORKER] hilo={} | Enviando notificacion de rechazo para pedido #{}",
+            hilo, payload.pedidoId());
 
-            log.info("[WORKER] hilo={} | Notificacion enviada: pedido #{} -- pago rechazado",
-                hilo, payload.pedidoId());
+        String destinatario = "cliente" + payload.clienteId() + "@fogatadigital.com";
 
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("[WORKER] hilo={} | Envio interrumpido para pedido #{}", hilo, payload.pedidoId());
-        }
+        emailService.enviar(
+            destinatario,
+            "Accion requerida: problema con el pago de tu pedido #" + payload.pedidoId(),
+            "pago-rechazado",
+            Map.of(
+                "pedidoId", payload.pedidoId(),
+                "motivo",   payload.motivo()
+            )
+        );
     }
 }

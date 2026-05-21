@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pago rechazado</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+    .header { background: #c62828; padding: 28px 32px; text-align: center; }
+    .header h1 { color: #ffffff; margin: 0; font-size: 22px; letter-spacing: 1px; }
+    .icon { font-size: 48px; text-align: center; padding: 20px 0 0; }
+    .body { padding: 32px; color: #333333; }
+    .body h2 { color: #c62828; font-size: 18px; margin-top: 0; }
+    .details { background: #fff8f8; border-left: 4px solid #c62828; border-radius: 4px; padding: 16px 20px; margin: 20px 0; }
+    .details table { width: 100%; border-collapse: collapse; }
+    .details td { padding: 6px 0; font-size: 14px; }
+    .details td:first-child { color: #777; width: 160px; }
+    .details td:last-child { font-weight: bold; color: #222; }
+    .steps { background: #f9f9f9; border-radius: 4px; padding: 16px 20px; margin: 20px 0; }
+    .steps ol { margin: 8px 0; padding-left: 20px; }
+    .steps li { padding: 4px 0; font-size: 14px; }
+    .footer { background: #f4f4f4; padding: 16px 32px; text-align: center; font-size: 12px; color: #aaa; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>La Fogata Digital</h1>
+  </div>
+  <div class="icon">❌</div>
+  <div class="body">
+    <h2>Tu pago no pudo procesarse</h2>
+    <p>Lamentamos informarte que el pago para tu pedido fue rechazado.</p>
+    <div class="details">
+      <table>
+        <tr>
+          <td>Número de pedido</td>
+          <td th:text="'#' + ${pedidoId}">#123</td>
+        </tr>
+        <tr>
+          <td>Motivo</td>
+          <td th:text="${motivo}">Fondos insuficientes</td>
+        </tr>
+      </table>
+    </div>
+    <div class="steps">
+      <strong>¿Qué puedes hacer?</strong>
+      <ol>
+        <li>Verifica que tu tarjeta tenga fondos suficientes.</li>
+        <li>Comprueba que los datos de la tarjeta estén correctos.</li>
+        <li>Intenta con otro método de pago.</li>
+        <li>Contacta a tu banco si el problema persiste.</li>
+      </ol>
+    </div>
+    <p>Tu pedido permanecerá activo durante 24 horas para que puedas completar el pago.</p>
+  </div>
+  <div class="footer">
+    Este email fue generado automáticamente. Por favor no respondas a este mensaje.
+  </div>
+</div>
+</body>
+</html>
