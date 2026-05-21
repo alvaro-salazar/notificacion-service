@@ -27,7 +27,7 @@ public class MensajeFallido {
     @Column(name = "payload", nullable = false, columnDefinition = "TEXT")
     private String payload;
 
-    @Column(name = "error_mensaje")
+    @Column(name = "error_mensaje", columnDefinition = "TEXT")
     private String errorMensaje;
 
     @Enumerated(EnumType.STRING)
